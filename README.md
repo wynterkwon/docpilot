@@ -137,10 +137,30 @@ pilot.generate(
 
 ## 데이터 인덱싱
 
-지원 입력 파일 형식: `.txt`, `.md`, `.rst`, `.csv`, `.pdf`, `.pptx`, `.jpg`, `.png`, `.jpeg`, `.bmp`, `.tiff`
+지원 입력 파일 형식: `.txt`, `.md`, `.rst`, `.csv`, `.hwpx`, `.pdf`, `.pptx`, `.jpg`, `.png`, `.jpeg`, `.bmp`, `.tiff`, `.webp`
 
 ```python
 pilot.index("./data")   # 폴더 내 모든 지원 파일을 재귀적으로 인덱싱
+```
+
+### 필요 extras 확인
+
+데이터 폴더를 미리 스캔해 어떤 extras가 필요한지 확인할 수 있습니다.
+
+```python
+from docpilot import suggest_extras
+
+result = suggest_extras("./data")
+print(result["found"])            # {'.pdf': 3, '.hwpx': 2, '.txt': 5, '.xlsx': 1}
+print(result["required_extras"])  # ['pdf']
+print(result["install_command"])  # pip install "docpilot[pdf]"
+print(result["unsupported"])      # {'.xlsx': 1}  ← docpilot이 처리할 수 없는 형식
+```
+
+`DocPilot` 인스턴스를 통해서도 동일하게 사용할 수 있습니다.
+
+```python
+result = DocPilot.suggest_extras("./data")
 ```
 
 ## 템플릿 작성 방법

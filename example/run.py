@@ -30,6 +30,14 @@ API_KEY = os.environ.get("ANTHROPIC_API_KEY")   # 다른 LLM이면 해당 키로
 def main():
     Path(OUTPUT).parent.mkdir(parents=True, exist_ok=True)
 
+    from docpilot import suggest_extras
+    check = suggest_extras(DATA_FOLDER)
+    if check["required_extras"]:
+        print(f"[필요 패키지] {check['install_command']}")
+    if check["unsupported"]:
+        exts = ", ".join(f"{e}({n}개)" for e, n in check["unsupported"].items())
+        print(f"[경고] 처리 불가 파일 형식 무시됨: {exts}")
+
     print(f"[1/3] DocPilot 초기화 (llm={LLM})")
     pilot = DocPilot(llm=LLM, api_key=API_KEY)
 

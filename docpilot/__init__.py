@@ -14,6 +14,67 @@ from docpilot.exceptions import BuilderError, DocPilotError, MappingError
 load_dotenv()
 
 _PLACEHOLDER_RE = re.compile(r"\{\{(.+?)\}\}")
+
+# Maps file extension → required extra (None = included in base install)
+_EXT_EXTRAS: dict[str, str | None] = {
+    ".txt":  None,
+    ".md":   None,
+    ".rst":  None,
+    ".csv":  None,
+    ".hwpx": None,
+    ".pdf":  "pdf",
+    ".pptx": "pptx",
+    ".jpg":  "image",
+    ".jpeg": "image",
+    ".png":  "image",
+    ".tiff": "image",
+    ".tif":  "image",
+    ".bmp":  "image",
+    ".webp": "image",
+}
+
+
+def suggest_extras(folder: str | Path) -> dict:
+    """
+    Scan a data folder and suggest which docpilot extras to install.
+
+    Returns a dict with:
+      found          — {extension: file_count} for all files found
+      unsupported    — {extension: file_count} for files docpilot cannot process
+      required_extras — list of extras needed (e.g. ["pdf", "pptx"])
+      install_command — ready-to-run pip command, or None if nothing extra needed
+    """
+    folder = Path(folder)
+    if not folder.is_dir():
+        raise DocPilotError("Not a directory", detail=str(folder))
+
+    found: dict[str, int] = {}
+    for file in folder.rglob("*"):
+        if not file.is_file():
+            continue
+        ext = file.suffix.lower()
+        found[ext] = found.get(ext, 0) + 1
+
+    unsupported: dict[str, int] = {
+        ext: count for ext, count in found.items() if ext not in _EXT_EXTRAS
+    }
+
+    required: list[str] = sorted({
+        extra
+        for ext in found
+        if ext in _EXT_EXTRAS and (extra := _EXT_EXTRAS[ext]) is not None
+    })
+
+    install_command = (
+        f'pip install "docpilot[{",".join(required)}]"' if required else None
+    )
+
+    return {
+        "found": found,
+        "unsupported": unsupported,
+        "required_extras": required,
+        "install_command": install_command,
+    }
 _BUILTIN_TEMPLATES = Path(__file__).parent / "templates"
 
 _BUILTIN_METADATA: dict[str, str] = {
@@ -240,6 +301,11 @@ class DocPilot:
     def list_templates() -> dict[str, str]:
         """Return built-in template names and their descriptions."""
         return dict(_BUILTIN_METADATA)
+
+    @staticmethod
+    def suggest_extras(folder: str | Path) -> dict:
+        """Scan a data folder and suggest which docpilot extras to install."""
+        return suggest_extras(folder)
 
     @staticmethod
     def _build_mapper(llm: str, api_key: str | None, model: str | None, base_url: str | None):
