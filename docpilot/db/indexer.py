@@ -85,8 +85,9 @@ def reindex(
 def index_folder(
     folder: str | Path,
     embed_fn: EmbedFn | None = None,
+    force: bool = False,
 ) -> list[int]:
-    """Ingest and index all supported files in a folder."""
+    """Ingest and index all supported files in a folder. force=True re-indexes already indexed files."""
     from docpilot.ingestion import text as text_ing
     from docpilot.ingestion import pdf as pdf_ing
     from docpilot.ingestion import image as image_ing
@@ -113,7 +114,7 @@ def index_folder(
             continue
         try:
             doc = ingester(file)
-            doc_id = index(doc, embed_fn=embed_fn)
+            doc_id = reindex(doc, embed_fn=embed_fn) if force else index(doc, embed_fn=embed_fn)
             doc_ids.append(doc_id)
         except IngestionError:
             raise

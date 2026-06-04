@@ -13,20 +13,43 @@
 
 ## 설치
 
+기본 설치는 HWPX 템플릿 생성과 Claude LLM만 포함합니다.
+
 ```bash
 pip install docpilot
 ```
 
-기본 설치에 **Claude(Anthropic)가 포함**됩니다. 다른 LLM을 사용하려면 extras를 추가하세요.
+필요한 기능에 따라 extras를 추가하세요.
 
 ```bash
-pip install "docpilot[openai]"    # OpenAI GPT 사용
-pip install "docpilot[gemini]"    # Google Gemini 사용
-pip install "docpilot[postgres]"  # PostgreSQL + pgvector 사용 (대용량)
-pip install "docpilot[openai,gemini,postgres]"  # 복합 설치
+pip install "docpilot[pdf]"       # PDF 읽기/쓰기 (OCR 포함)
+pip install "docpilot[pptx]"      # PPTX 읽기
+pip install "docpilot[image]"     # 이미지 읽기 (JPG, PNG 등)
+pip install "docpilot[docx]"      # DOCX 쓰기
+pip install "docpilot[morpheme]"  # 형태소 기반 한국어 검색
+pip install "docpilot[vec]"       # 벡터 임베딩 검색
+pip install "docpilot[openai]"    # OpenAI GPT / Grok / Ollama
+pip install "docpilot[gemini]"    # Google Gemini
+pip install "docpilot[postgres]"  # PostgreSQL + pgvector (대용량)
+pip install "docpilot[all]"       # 전체 설치
 ```
 
-> **Note**: PDF OCR 기능은 시스템에 [Tesseract](https://github.com/tesseract-ocr/tesseract)와 [Poppler](https://poppler.freedesktop.org/)가 설치되어 있어야 합니다.
+복합 설치 예시:
+
+```bash
+pip install "docpilot[pdf,pptx,image,docx]"        # 모든 파일 형식
+pip install "docpilot[openai,vec]"                  # OpenAI + 벡터 검색
+pip install "docpilot[pdf,openai,morpheme,postgres]"  # 풀 스택
+```
+
+### 시스템 의존성
+
+`[pdf]` extras는 Python 패키지 외에 시스템 바이너리가 필요합니다.
+
+| 도구 | 용도 | 설치 |
+|------|------|------|
+| [Tesseract](https://github.com/tesseract-ocr/tesseract) | PDF OCR | [설치 가이드](https://tesseract-ocr.github.io/tessdoc/Installation.html) |
+| [Poppler](https://poppler.freedesktop.org/) | PDF → 이미지 변환 | Windows: `winget install poppler` |
 
 ## LLM 제공자
 

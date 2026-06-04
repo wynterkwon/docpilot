@@ -128,19 +128,7 @@
     <hp:run charPrIDRef="0"><hp:t/></hp:run>
   </hp:p>
   <hp:p id="1000000006" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 사업명: 협력종합예술활동 운영 위탁 용역</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000007" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 사업기간: 2021. 3. 1. ~ 2023. 2. 28.(2년)</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000008" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>    - 1차: 21.3.1.~21.12.31. / 2차: 22.1.1.~22.12.31. / 3차: 23.1.1.~23.2.28.</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000009" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 소요예산: 금7,354,948천원(금칠십삼억오천사백구십사만팔천원/VAT 포함)</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000010" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 계약방법: 공개경쟁입찰(협상에 의한 계약)</hp:t></hp:run>
+    <hp:run charPrIDRef="0"><hp:t>{{사업 개요}}</hp:t></hp:run>
   </hp:p>
 
   <!-- 빈 줄 -->
@@ -189,16 +177,7 @@
     <hp:run charPrIDRef="0"><hp:t/></hp:run>
   </hp:p>
   <hp:p id="1000000014" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 예술적 소양이 융·복합 미래사회를 대비하는 주요 역량이 됨에 따라 모든 학생들이 예술적 감수성을 기를 수 있는 예술보편교육 지원</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000015" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 학교예술교육 지원 사업 지속성 확보와 교육과정 연계 협력종합예술활동 운영 안착 및 내실화</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000016" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 서울특별시교육청과 예술교육 전문기관 간 역할 분담과 상호협력으로 학교예술교육 통합시스템 구축</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000017" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 협력종합예술활동 관련 종합적인 전문 관리·운영 시스템을 구축하여, 지원 사업에 대한 전문성 및 신뢰성 확보</hp:t></hp:run>
+    <hp:run charPrIDRef="0"><hp:t>{{추진 배경}}</hp:t></hp:run>
   </hp:p>
 
   <!-- 빈 줄 -->
@@ -247,25 +226,7 @@
     <hp:run charPrIDRef="0"><hp:t/></hp:run>
   </hp:p>
   <hp:p id="1000000021" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 서울특별시교육청 학교문화예술교육 진흥 조례(2015. 12. 31.)</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000022" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 학교문화예술교육 중장기 발전계획(교육혁신과-14927, 2015. 8. 26.)</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000023" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 서울특별시 중학교 교육과정 편성·운영 지침(서울특별시교육청 고시 제 2017-4호, 2017.3.13.)</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000024" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 2020 학교예술교육 활성화 기본 계획(체육건강문화예술과-3030, 2020. 2. 21.)</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000025" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 2020 교육감 공약 사업 1-3-1 협력적 인성과 미래 감성을 키우는 협력종합예술활동 확대</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000026" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 2020 서울인성교육 시행계획(초등교육과-4477, 2020.3.24.)</hp:t></hp:run>
-  </hp:p>
-  <hp:p id="1000000027" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
-    <hp:run charPrIDRef="0"><hp:t>  ○ 제2기 학교예술교육 중장기 발전계획 기본운영의 운영 계획(체육건강문화예술과-3648, 2020.3.3.)</hp:t></hp:run>
+    <hp:run charPrIDRef="0"><hp:t>{{추진 근거}}</hp:t></hp:run>
   </hp:p>
 
   <!-- 하단 여백 + 페이지 번호 -->

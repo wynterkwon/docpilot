@@ -17,9 +17,10 @@ _PLACEHOLDER_RE = re.compile(r"\{\{(.+?)\}\}")
 _BUILTIN_TEMPLATES = Path(__file__).parent / "templates"
 
 _BUILTIN_METADATA: dict[str, str] = {
-    "report":  "일반 보고서 — 보고서 제목, 섹션 본문, 결론",
-    "gonmun":  "공문 — 수신자, 제목, 본문, 기관 정보",
-    "minutes": "회의록 — 제목, 일시, 참석자, 안건, 논의, 결정 사항",
+    "report":   "일반 보고서 — 보고서 제목, 섹션 본문, 결론",
+    "gonmun":   "공문 — 수신자, 제목, 본문, 기관 정보",
+    "minutes":  "회의록 — 제목, 일시, 참석자, 안건, 논의, 결정 사항",
+    "proposal": "제안서 — 사업 개요, 추진 배경, 추진 근거",
 }
 
 _ASSEMBLED_CACHE: dict[str, Path] = {}
@@ -154,11 +155,7 @@ class DocPilot:
         output_path = Path(output)
 
         from docpilot.db import indexer
-        if reindex:
-            for file in Path(data_folder).rglob("*"):
-                if file.is_file():
-                    pass  # reindex handled per-file in index_folder
-        self.index(data_folder)
+        indexer.index_folder(data_folder, embed_fn=self._embed_fn, force=reindex)
 
         sections = _extract_placeholders(template_path)
         if not sections:
@@ -168,14 +165,10 @@ class DocPilot:
             )
 
         content = self._search_content(sections)
+        from docpilot.mapping.base import TemplateSection
         mapping_result = self._mapper.map(
             content=content,
-            sections=[
-                __import__(
-                    "docpilot.mapping.base", fromlist=["TemplateSection"]
-                ).TemplateSection(name=s)
-                for s in sections
-            ],
+            sections=[TemplateSection(name=s) for s in sections],
         )
 
         builder = self._build_builder(output_path)
