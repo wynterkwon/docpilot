@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docpilot"
+version = "0.1.0"
+description = "LLM-powered document generation from data sources and templates"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+keywords = ["llm", "document", "hwpx", "docx", "pdf", "rag", "template"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Core
+    "lxml>=5.0",
+    "python-dotenv>=1.0",
+    # Ingestion
+    "pdfplumber>=0.11",
+    "pdf2image>=1.17",
+    "Pillow>=10.0",
+    "pytesseract>=0.3",
+    "python-pptx>=1.0",
+    # Database
+    "sqlalchemy>=2.0",
+    "sqlite-vec>=0.1",
+    # Builder
+    "reportlab>=4.0",
+    "python-docx>=1.1",
+    # Search
+    "kiwipiepy>=0.18",
+    # LLM (at least one required)
+    "anthropic>=0.25",
+]
+
+[project.urls]
+Homepage = "https://github.com/wynterkwon/docpilot"
+Issues = "https://github.com/wynterkwon/docpilot/issues"
+
+
+
+[project.optional-dependencies]
+openai = ["openai>=1.0"]
+gemini = ["google-genai>=1.0"]
+postgres = [
+    "psycopg2-binary>=2.9",
+    "pgvector>=0.3",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["docpilot*"]
+
+[tool.setuptools.package-data]
+docpilot = ["templates/**/*"]
