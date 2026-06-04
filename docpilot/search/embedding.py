@@ -126,3 +126,74 @@ def openai_embed_fn(
         return response.data[0].embedding
 
     return _embed
+
+
+def voyage_embed_fn(
+    api_key: str | None = None,
+    model: str = "voyage-3",
+) -> EmbedFn:
+    """Factory that returns a Voyage AI embedding function."""
+    import os
+
+    key = api_key or os.environ.get("VOYAGE_API_KEY")
+    if not key:
+        raise SearchError(
+            "Voyage API key not provided",
+            detail="Pass api_key or set VOYAGE_API_KEY env var",
+        )
+
+    def _embed(text: str) -> list[float]:
+        try:
+            import voyageai
+        except ImportError as e:
+            raise SearchError("voyageai SDK required: pip install voyageai") from e
+
+        client = voyageai.Client(api_key=key)
+        result = client.embed([text], model=model)
+        return result.embeddings[0]
+
+    return _embed
+
+
+def bge_embed_fn(
+    model: str = "BAAI/bge-m3",
+    device: str = "cpu",
+    use_fp16: bool = False,
+) -> EmbedFn:
+    """
+    Factory that returns a local BGE embedding function via FlagEmbedding.
+    Model is downloaded from HuggingFace on first use and cached locally.
+    """
+    try:
+        from FlagEmbedding import BGEM3FlagModel
+    except ImportError as e:
+        raise SearchError("FlagEmbedding required: pip install FlagEmbedding") from e
+
+    _model = BGEM3FlagModel(model, use_fp16=use_fp16, device=device)
+
+    def _embed(text: str) -> list[float]:
+        result = _model.encode([text])
+        return result["dense_vecs"][0].tolist()
+
+    return _embed
+
+
+def sentence_embed_fn(
+    model: str = "paraphrase-multilingual-MiniLM-L12-v2",
+    device: str = "cpu",
+) -> EmbedFn:
+    """
+    Factory that returns a local sentence-transformers embedding function.
+    Model is downloaded from HuggingFace on first use and cached locally.
+    """
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError as e:
+        raise SearchError("sentence-transformers required: pip install sentence-transformers") from e
+
+    _model = SentenceTransformer(model, device=device)
+
+    def _embed(text: str) -> list[float]:
+        return _model.encode(text).tolist()
+
+    return _embed

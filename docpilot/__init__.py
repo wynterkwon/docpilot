@@ -126,7 +126,11 @@ class DocPilot:
         self._llm = llm or os.environ.get("DOCPILOT_LLM", "claude")
         self._api_key = api_key
         self._embed_fn = embed_fn
-        self._mapper = self._build_mapper(self._llm, api_key, model, base_url)
+        base_mapper = self._build_mapper(self._llm, api_key, model, base_url)
+
+        from docpilot.mapping.rag import RagMapper
+        self._mapper = base_mapper
+        self._rag_mapper = RagMapper(base_mapper, embed_fn=embed_fn)
 
         from docpilot.db import client as db_client
         db_client.init(database_url)
@@ -157,19 +161,15 @@ class DocPilot:
         from docpilot.db import indexer
         indexer.index_folder(data_folder, embed_fn=self._embed_fn, force=reindex)
 
-        sections = _extract_placeholders(template_path)
+        from docpilot.mapping.base import TemplateSection
+        sections = [TemplateSection(name=s) for s in _extract_placeholders(template_path)]
         if not sections:
             raise DocPilotError(
                 "No {{placeholders}} found in template",
                 detail=str(template_path),
             )
 
-        content = self._search_content(sections)
-        from docpilot.mapping.base import TemplateSection
-        mapping_result = self._mapper.map(
-            content=content,
-            sections=[TemplateSection(name=s) for s in sections],
-        )
+        mapping_result = self._rag_mapper.map(sections)
 
         builder = self._build_builder(output_path)
         return builder.build(template_path, mapping_result.sections, output_path)
@@ -202,8 +202,9 @@ class DocPilot:
 
         template_path = self._resolve_template(template)
         self.index(data_folder)
-        sections = _extract_placeholders(template_path)
-        content = self._search_content(sections)
+
+        template_sections = [TemplateSection(name=s) for s in _extract_placeholders(template_path)]
+        content = self._rag_mapper.retrieve_content(template_sections)
 
         if mappers is None:
             mappers = {"claude": ClaudeMapper(api_key=self._api_key)}
@@ -211,20 +212,8 @@ class DocPilot:
             if oai_key:
                 mappers["openai"] = OpenAIMapper(api_key=oai_key)
 
-        template_sections = [TemplateSection(name=s) for s in sections]
         results = benchmark.run(content, template_sections, mappers)
         return benchmark.report(results)
-
-    def _search_content(self, sections: list[str]) -> str:
-        from docpilot.search import exact
-        from docpilot.exceptions import SearchError
-
-        query = " ".join(sections)
-        try:
-            results = exact.search(query, top_k=20)
-            return "\n\n".join(r.content for r in results)
-        except SearchError:
-            return query
 
     def _resolve_template(self, template: str | Path) -> Path:
         path = Path(template)

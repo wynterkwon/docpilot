@@ -92,6 +92,7 @@ def index_folder(
     from docpilot.ingestion import pdf as pdf_ing
     from docpilot.ingestion import image as image_ing
     from docpilot.ingestion import pptx as pptx_ing
+    from docpilot.ingestion import hwpx as hwpx_ing
     from docpilot.exceptions import IngestionError
 
     folder = Path(folder)
@@ -103,6 +104,7 @@ def index_folder(
         ".pdf": pdf_ing.ingest,
         **{ext: image_ing.ingest for ext in image_ing.SUPPORTED_EXTENSIONS},
         ".pptx": pptx_ing.ingest,
+        ".hwpx": hwpx_ing.ingest,
     }
 
     doc_ids: list[int] = []
@@ -116,8 +118,9 @@ def index_folder(
             doc = ingester(file)
             doc_id = reindex(doc, embed_fn=embed_fn) if force else index(doc, embed_fn=embed_fn)
             doc_ids.append(doc_id)
-        except IngestionError:
-            raise
+        except IngestionError as e:
+            import sys
+            print(f"[docpilot] skipped {file.name}: {e}", file=sys.stderr)
         except Exception as e:
             raise SearchError("Unexpected error during indexing", detail=str(e)) from e
 

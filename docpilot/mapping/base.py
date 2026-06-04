@@ -3,6 +3,10 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from docpilot.ingestion.models import IngestedDocument
 
 
 @dataclass
@@ -25,18 +29,36 @@ class MappingResult:
         return self.input_tokens + self.output_tokens
 
 
+def merge_documents(docs: list[IngestedDocument]) -> str:
+    """Combine multiple IngestedDocuments into a single labelled string."""
+    parts: list[str] = []
+    for doc in docs:
+        label = f"[출처: {doc.source.name}]"
+        parts.append(f"{label}\n{doc.content.strip()}")
+    return "\n\n".join(parts)
+
+
 class BaseLLMMapper(ABC):
     """Abstract interface for LLM-based content-to-template mappers."""
 
     @abstractmethod
-    def map(self, content: str, sections: list[TemplateSection]) -> MappingResult:
+    def map(
+        self,
+        content: str | list[IngestedDocument],
+        sections: list[TemplateSection],
+    ) -> MappingResult:
         """
         Map source content into template sections.
 
-        content: concatenated text from ingested documents
+        content: plain text string, or a list of IngestedDocuments to merge automatically
         sections: list of template sections to fill
         Returns: MappingResult with generated content per section
         """
+
+    def _resolve_content(self, content: str | list[IngestedDocument]) -> str:
+        if isinstance(content, str):
+            return content
+        return merge_documents(content)
 
     def _build_prompt(self, content: str, sections: list[TemplateSection]) -> str:
         section_list = "\n".join(
@@ -56,6 +78,7 @@ class BaseLLMMapper(ABC):
 
 ## 작성 규칙
 - 아래 섹션 목록의 모든 항목을 빠짐없이 채워야 합니다.
+- 소스 데이터가 여러 출처로 구성된 경우, 모든 출처를 종합하여 작성하세요.
 - 소스 데이터에 해당 섹션의 내용이 불충분하면, 문맥상 가장 적절한 내용으로 작성하세요.
 - 각 섹션 내용은 완성된 문장으로 작성하세요.
 

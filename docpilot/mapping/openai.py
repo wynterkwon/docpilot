@@ -25,14 +25,14 @@ class OpenAIMapper(BaseLLMMapper):
                 detail="Pass api_key or set OPENAI_API_KEY env var",
             )
 
-    def map(self, content: str, sections: list[TemplateSection]) -> MappingResult:
+    def map(self, content, sections: list[TemplateSection]) -> MappingResult:
         try:
             from openai import OpenAI
         except ImportError as e:
             raise MappingError("openai SDK required: pip install openai") from e
 
         client = OpenAI(api_key=self._api_key)
-        prompt = self._build_prompt(content, sections)
+        prompt = self._build_prompt(self._resolve_content(content), sections)
 
         start = time.perf_counter()
         try:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import shutil
 import tempfile
 import zipfile
@@ -84,14 +85,12 @@ def _pack(src: Path, output: Path) -> None:
 
 
 def _replace_placeholders(root, sections: dict[str, str]) -> None:
-    from lxml import etree
-
     # Detect hp namespace from document root (supports both 2011 and 2012 variants)
     hp_ns = root.nsmap.get("hp", "http://www.hancom.co.kr/hwpml/2012/paragraph")
     hp_t = f"{{{hp_ns}}}t"
     hp_p = f"{{{hp_ns}}}p"
 
-    for para in root.iter(hp_p):
+    for para in list(root.iter(hp_p)):
         t_elements = para.findall(f".//{hp_t}")
         if not t_elements:
             continue
@@ -105,9 +104,37 @@ def _replace_placeholders(root, sections: dict[str, str]) -> None:
         if key not in sections:
             continue
 
-        replacement = sections[key]
+        replaced = PLACEHOLDER_RE.sub(sections[key], full_text, count=1)
+        lines = replaced.split("\n")
 
-        # Put replacement in first t element, clear the rest
-        t_elements[0].text = PLACEHOLDER_RE.sub(replacement, full_text, count=1)
-        for el in t_elements[1:]:
-            el.text = ""
+        if len(lines) == 1:
+            t_elements[0].text = lines[0]
+            for el in t_elements[1:]:
+                el.text = ""
+            continue
+
+        # Multiline: expand into one <hp:p> per line
+        parent = para.getparent()
+        if parent is None:
+            t_elements[0].text = " ".join(lines)
+            for el in t_elements[1:]:
+                el.text = ""
+            continue
+
+        idx = list(parent).index(para)
+        base_id = int(para.get("id", "2000000000"))
+
+        new_paras = []
+        for i, line in enumerate(lines):
+            new_p = copy.deepcopy(para)
+            new_p.set("id", str(base_id + 10000 + i))
+            new_t_elements = new_p.findall(f".//{hp_t}")
+            if new_t_elements:
+                new_t_elements[0].text = line
+                for el in new_t_elements[1:]:
+                    el.text = ""
+            new_paras.append(new_p)
+
+        parent.remove(para)
+        for j, new_p in enumerate(new_paras):
+            parent.insert(idx + j, new_p)

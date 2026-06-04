@@ -8,6 +8,7 @@
 - **다양한 출력 포맷** — HWPX, DOCX, PDF
 - **LLM 교체 가능** — Claude · OpenAI · Gemini · Grok · Ollama, 동일 인터페이스
 - **벡터 + 형태소 검색** — sqlite-vec 임베딩 검색 (기본), pgvector (선택), kiwipiepy 형태소 검색
+- **임베딩 제공자 선택** — OpenAI · Voyage AI · BGE(로컬) · sentence-transformers(로컬), 동일 인터페이스
 - **템플릿 자동 생성** — 샘플 HWPX 문서에서 공통 섹션 구조 추출
 - **LLM 벤치마크** — 여러 LLM의 매핑 결과를 나란히 비교
 
@@ -28,8 +29,11 @@ pip install "docpilot[image]"     # 이미지 읽기 (JPG, PNG 등)
 pip install "docpilot[docx]"      # DOCX 쓰기
 pip install "docpilot[morpheme]"  # 형태소 기반 한국어 검색
 pip install "docpilot[vec]"       # 벡터 임베딩 검색
-pip install "docpilot[openai]"    # OpenAI GPT / Grok / Ollama
+pip install "docpilot[openai]"    # OpenAI GPT / Grok / Ollama + 임베딩
 pip install "docpilot[gemini]"    # Google Gemini
+pip install "docpilot[voyage]"    # Voyage AI 임베딩 (한국어 우수)
+pip install "docpilot[bge]"       # BGE 로컬 임베딩 (BAAI/bge-m3, 한국어 우수)
+pip install "docpilot[sentence]"  # sentence-transformers 로컬 임베딩
 pip install "docpilot[postgres]"  # PostgreSQL + pgvector (대용량)
 pip install "docpilot[all]"       # 전체 설치
 ```
@@ -37,9 +41,10 @@ pip install "docpilot[all]"       # 전체 설치
 복합 설치 예시:
 
 ```bash
-pip install "docpilot[pdf,pptx,image,docx]"        # 모든 파일 형식
-pip install "docpilot[openai,vec]"                  # OpenAI + 벡터 검색
-pip install "docpilot[pdf,openai,morpheme,postgres]"  # 풀 스택
+pip install "docpilot[pdf,pptx,image,docx]"           # 모든 파일 형식
+pip install "docpilot[openai,vec]"                     # OpenAI LLM + 임베딩 + 벡터 검색
+pip install "docpilot[bge,vec]"                        # 로컬 임베딩 + 벡터 검색 (API 키 불필요)
+pip install "docpilot[pdf,openai,morpheme,postgres]"   # 풀 스택
 ```
 
 ### 시스템 의존성
@@ -158,7 +163,7 @@ docpilot이 데이터 폴더의 내용을 읽어 각 섹션을 채웁니다.
 
 | 이름 | 용도 | 주요 플레이스홀더 |
 |------|------|-----------------|
-| `report` | 일반 보고서 | 보고서 제목, 작성일, 작성자/부서, 섹션 제목, 본문 내용, 결론 |
+| `report` | 일반 보고서 | 보고서 제목, 작성일, 작성자/부서, 섹션1 제목, 섹션1 내용, 섹션2 제목, 섹션2 내용, 표 삽입 위치, 결론, 결론 내용 |
 | `gonmun` | 공문 | 기관명, 수신자, 경유, 제목, 본문1·2, 직위 성명, 시행번호 등 |
 | `minutes` | 회의록 | 회의록 제목, 일시, 장소, 참석자, 안건, 논의, 결정 사항 |
 
@@ -210,12 +215,74 @@ from docpilot.search import exact, embedding, morpheme
 # 키워드 정확 검색
 results = exact.search("사업 계획")
 
-# 벡터 유사도 검색 (OpenAI 임베딩 사용 예시)
-from docpilot.search.embedding import openai_embed_fn  # pip install "docpilot[openai]" 필요
-results = embedding.search("사업 계획", embed_fn=openai_embed_fn())
-
-# 형태소 기반 검색 (kiwipiepy, 설치 패키지 추가 불필요)
+# 형태소 기반 검색 — pip install "docpilot[morpheme]"
 results = morpheme.search("사업 계획")
+
+# 벡터 유사도 검색 — embed_fn을 아래 임베딩 제공자 중 선택해서 전달
+from docpilot.search.embedding import openai_embed_fn
+results = embedding.search("사업 계획", embed_fn=openai_embed_fn())
+```
+
+## 임베딩 제공자
+
+docpilot은 벡터 검색(RAG)에 사용할 임베딩 제공자를 자유롭게 선택할 수 있습니다.  
+`DocPilot(embed_fn=...)` 또는 `embedding.search(embed_fn=...)`에 팩토리 함수를 전달합니다.
+
+### API 방식 (외부 서비스 호출)
+
+| 제공자 | 팩토리 함수 | 기본 모델 | 필요 패키지 | 환경변수 |
+|--------|------------|-----------|------------|---------|
+| OpenAI | `openai_embed_fn()` | `text-embedding-3-small` | `[openai]` | `OPENAI_API_KEY` |
+| Voyage AI | `voyage_embed_fn()` | `voyage-3` | `[voyage]` | `VOYAGE_API_KEY` |
+
+```python
+from docpilot.search.embedding import openai_embed_fn, voyage_embed_fn
+
+# OpenAI — pip install "docpilot[openai]"
+embed_fn = openai_embed_fn()                                    # OPENAI_API_KEY 환경변수 사용
+embed_fn = openai_embed_fn(api_key="sk-...", model="text-embedding-3-large")
+
+# Voyage AI — pip install "docpilot[voyage]" / 한국어 포함 다국어 우수
+embed_fn = voyage_embed_fn()                                    # VOYAGE_API_KEY 환경변수 사용
+embed_fn = voyage_embed_fn(api_key="pa-...", model="voyage-3")
+
+pilot = DocPilot(llm="claude", embed_fn=embed_fn)
+```
+
+### 로컬 방식 (API 키 불필요, 모델 자동 다운로드)
+
+| 제공자 | 팩토리 함수 | 기본 모델 | 필요 패키지 |
+|--------|------------|-----------|------------|
+| BGE (BAAI) | `bge_embed_fn()` | `BAAI/bge-m3` | `[bge]` |
+| sentence-transformers | `sentence_embed_fn()` | `paraphrase-multilingual-MiniLM-L12-v2` | `[sentence]` |
+
+```python
+from docpilot.search.embedding import bge_embed_fn, sentence_embed_fn
+
+# BGE — pip install "docpilot[bge]" / 한국어 포함 다국어 최상위권
+embed_fn = bge_embed_fn()                                       # CPU, BAAI/bge-m3
+embed_fn = bge_embed_fn(device="cuda", use_fp16=True)          # GPU 가속
+
+# sentence-transformers — pip install "docpilot[sentence]" / 경량 다국어
+embed_fn = sentence_embed_fn()
+embed_fn = sentence_embed_fn(model="multilingual-e5-large", device="cuda")
+
+pilot = DocPilot(llm="claude", embed_fn=embed_fn)
+```
+
+> **모델 캐시**: 로컬 모델은 첫 실행 시 HuggingFace에서 자동 다운로드되어 `~/.cache/huggingface/`에 저장됩니다. 이후 실행부터는 캐시에서 불러옵니다.
+
+### 커스텀 임베딩
+
+`Callable[[str], list[float]]` 인터페이스를 맞추면 어떤 임베딩 모델이든 연결할 수 있습니다.
+
+```python
+# 예시: 직접 구현한 임베딩 함수
+def my_embed_fn(text: str) -> list[float]:
+    ...
+    return vector  # list[float]
+
+pilot = DocPilot(llm="claude", embed_fn=my_embed_fn)
 ```
 
 ## 데이터베이스 설정

@@ -111,7 +111,7 @@
   <!-- 8. Section heading 1 -->
   <hp:p id="1000000009" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
     <hp:run charPrIDRef="8">
-      <hp:t>1. {{섹션 제목}}</hp:t>
+      <hp:t>1. {{섹션1 제목}}</hp:t>
     </hp:run>
     <hp:linesegarray>
       <hp:lineseg textpos="0" vertpos="0" vertsize="1400" textheight="1400" baseline="1190" spacing="840" horzpos="0" horzsize="42520" flags="393216"/>
@@ -120,7 +120,7 @@
   <!-- 9. Body -->
   <hp:p id="1000000010" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
     <hp:run charPrIDRef="0">
-      <hp:t>{{본문 내용}}</hp:t>
+      <hp:t>{{섹션1 내용}}</hp:t>
     </hp:run>
     <hp:linesegarray>
       <hp:lineseg textpos="0" vertpos="0" vertsize="1000" textheight="1000" baseline="850" spacing="600" horzpos="0" horzsize="42520" flags="393216"/>
@@ -138,7 +138,7 @@
   <!-- 11. Section heading 2 -->
   <hp:p id="1000000012" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
     <hp:run charPrIDRef="8">
-      <hp:t>2. {{섹션 제목}}</hp:t>
+      <hp:t>2. {{섹션2 제목}}</hp:t>
     </hp:run>
     <hp:linesegarray>
       <hp:lineseg textpos="0" vertpos="0" vertsize="1400" textheight="1400" baseline="1190" spacing="840" horzpos="0" horzsize="42520" flags="393216"/>
@@ -147,7 +147,7 @@
   <!-- 12. Body -->
   <hp:p id="1000000013" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">
     <hp:run charPrIDRef="0">
-      <hp:t>{{본문 내용}}</hp:t>
+      <hp:t>{{섹션2 내용}}</hp:t>
     </hp:run>
     <hp:linesegarray>
       <hp:lineseg textpos="0" vertpos="0" vertsize="1000" textheight="1000" baseline="850" spacing="600" horzpos="0" horzsize="42520" flags="393216"/>

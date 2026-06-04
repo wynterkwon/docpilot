@@ -25,14 +25,14 @@ class ClaudeMapper(BaseLLMMapper):
                 detail="Pass api_key or set ANTHROPIC_API_KEY env var",
             )
 
-    def map(self, content: str, sections: list[TemplateSection]) -> MappingResult:
+    def map(self, content, sections: list[TemplateSection]) -> MappingResult:
         try:
             import anthropic
         except ImportError as e:
             raise MappingError("anthropic SDK required: pip install anthropic") from e
 
         client = anthropic.Anthropic(api_key=self._api_key)
-        prompt = self._build_prompt(content, sections)
+        prompt = self._build_prompt(self._resolve_content(content), sections)
 
         start = time.perf_counter()
         try:

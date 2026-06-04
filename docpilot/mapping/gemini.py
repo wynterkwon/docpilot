@@ -25,14 +25,14 @@ class GeminiMapper(BaseLLMMapper):
                 detail="Pass api_key or set GEMINI_API_KEY env var",
             )
 
-    def map(self, content: str, sections: list[TemplateSection]) -> MappingResult:
+    def map(self, content, sections: list[TemplateSection]) -> MappingResult:
         try:
             from google import genai
         except ImportError as e:
             raise MappingError("google-genai SDK required: pip install google-genai") from e
 
         client = genai.Client(api_key=self._api_key)
-        prompt = self._build_prompt(content, sections)
+        prompt = self._build_prompt(self._resolve_content(content), sections)
 
         start = time.perf_counter()
         try:

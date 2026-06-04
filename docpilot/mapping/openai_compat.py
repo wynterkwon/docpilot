@@ -28,14 +28,14 @@ class OpenAICompatMapper(BaseLLMMapper):
         self._api_key = api_key
         self._max_tokens = max_tokens
 
-    def map(self, content: str, sections: list[TemplateSection]) -> MappingResult:
+    def map(self, content, sections: list[TemplateSection]) -> MappingResult:
         try:
             from openai import OpenAI
         except ImportError as e:
             raise MappingError("openai SDK required: pip install openai") from e
 
         client = OpenAI(api_key=self._api_key, base_url=self._base_url)
-        prompt = self._build_prompt(content, sections)
+        prompt = self._build_prompt(self._resolve_content(content), sections)
 
         start = time.perf_counter()
         try:
