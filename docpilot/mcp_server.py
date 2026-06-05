@@ -45,13 +45,19 @@ def generate(
         output: 출력 파일 경로 — 확장자가 출력 형식을 결정합니다 (.hwpx / .pdf / .docx)
         reindex: True이면 데이터 폴더를 강제로 재인덱싱합니다 (기본값: False)
     """
-    result_path = _get_pilot().generate(
+    result = _get_pilot().generate(
         data_folder=data_folder,
         template=template,
         output=output,
         reindex=reindex,
     )
-    return f"문서 생성 완료: {result_path}"
+    return (
+        f"문서 생성 완료: {result.path}\n"
+        f"모델: {result.model} | "
+        f"입력 {result.input_tokens:,} + 출력 {result.output_tokens:,} = "
+        f"총 {result.total_tokens:,} 토큰 | "
+        f"소요 {result.elapsed_seconds:.1f}초"
+    )
 
 
 @mcp.tool()

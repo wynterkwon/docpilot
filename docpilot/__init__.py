@@ -5,6 +5,7 @@ import os
 import re
 import tempfile
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -14,6 +15,25 @@ from docpilot.exceptions import BuilderError, DocPilotError, MappingError
 load_dotenv()
 
 _PLACEHOLDER_RE = re.compile(r"\{\{(.+?)\}\}")
+
+@dataclass
+class GenerateResult:
+    path: Path
+    model: str
+    input_tokens: int
+    output_tokens: int
+    elapsed_seconds: float
+
+    @property
+    def total_tokens(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+    def __str__(self) -> str:
+        return str(self.path)
+
+    def __fspath__(self) -> str:
+        return str(self.path)
+
 
 _MODEL_PRICING: dict[str, tuple[float, float]] = {
     "claude-opus-4-8":   (5.00, 25.00),
@@ -218,7 +238,7 @@ class DocPilot:
         template: str | Path,
         output: str | Path,
         reindex: bool = False,
-    ) -> Path:
+    ) -> GenerateResult:
         """
         Full pipeline: index → search → map → build.
 
@@ -243,7 +263,14 @@ class DocPilot:
         mapping_result = self._rag_mapper.map(sections)
 
         builder = self._build_builder(output_path)
-        return builder.build(template_path, mapping_result.sections, output_path)
+        out_path = builder.build(template_path, mapping_result.sections, output_path)
+        return GenerateResult(
+            path=out_path,
+            model=mapping_result.model,
+            input_tokens=mapping_result.input_tokens,
+            output_tokens=mapping_result.output_tokens,
+            elapsed_seconds=mapping_result.elapsed_seconds,
+        )
 
     def generate_template(
         self,
