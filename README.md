@@ -35,6 +35,7 @@ pip install "docpilot[voyage]"    # Voyage AI 임베딩 (한국어 우수)
 pip install "docpilot[bge]"       # BGE 로컬 임베딩 (BAAI/bge-m3, 한국어 우수)
 pip install "docpilot[sentence]"  # sentence-transformers 로컬 임베딩
 pip install "docpilot[postgres]"  # PostgreSQL + pgvector (대용량)
+pip install "docpilot[mcp]"       # Claude 앱 MCP 서버
 pip install "docpilot[all]"       # 전체 설치
 ```
 
@@ -366,6 +367,89 @@ gemini                      0.00         0          0           0  오류: API k
 ```
 
 API 키 누락이나 호출 실패가 발생한 LLM은 오류 상태로 표시되고, 나머지 LLM의 결과는 정상 출력됩니다.
+
+## MCP 서버
+
+Claude 앱에서 docpilot 도구를 직접 사용하려면 MCP 서버를 설치하고 연결합니다.
+
+### 설치
+
+```bash
+pip install "docpilot[mcp]"
+```
+
+### Claude Desktop 연결
+
+`claude_desktop_config.json`에 아래 블록을 추가합니다.
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "docpilot": {
+      "command": "docpilot-mcp",
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    }
+  }
+}
+```
+
+설정 저장 후 Claude Desktop을 재시작하면 다음 도구가 활성화됩니다.
+
+| 도구 | 설명 |
+|------|------|
+| `generate` | 데이터 폴더 + 템플릿 → 문서 생성 |
+| `generate_template` | 샘플 HWPX → 재사용 가능한 템플릿 생성 |
+| `estimate_cost` | 생성 전 API 토큰 비용 추정 |
+
+Claude 앱에서 자연어로 사용합니다.
+
+```
+/data 폴더의 내용을 바탕으로 report 템플릿으로 보고서를 만들어줘.
+출력 경로는 /output/result.hwpx
+```
+
+### 환경변수
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `ANTHROPIC_API_KEY` | — | Claude API 키 (필수) |
+| `DOCPILOT_LLM` | `claude` | LLM 제공자 (`claude` / `openai` / `gemini` / `grok` / `ollama`) |
+| `DOCPILOT_MODEL` | 제공자 기본 | 특정 모델 지정 (예: `claude-opus-4-8`) |
+| `DATABASE_URL` | SQLite 로컬 | DB 연결 문자열 |
+
+## 비용 추정
+
+실제 문서 생성 전 예상 API 비용을 확인할 수 있습니다. LLM 완성 호출 없이 token-counting API만 사용하므로 추정 자체의 비용은 거의 없습니다.
+
+> **참고**: `llm="claude"` (기본값) 일 때는 Anthropic token-counting API로 정확한 입력 토큰 수를 계산합니다. `openai`·`gemini` 등 다른 제공자로 전환한 경우에는 섹션당 고정값(~3,000 토큰)을 사용한 대략 추정치만 반환됩니다.
+
+```python
+report = pilot.estimate_cost(
+    data_folder="./data",
+    template="report",
+)
+print(report)
+```
+
+출력 예시:
+
+```
+=== docpilot 비용 추정 ===
+모델:             claude-sonnet-4-6
+섹션 수:          5개
+입력 토큰:        12,450
+출력 토큰 (추정): 2,500  (섹션당 500 추정)
+예상 비용:        $0.0498
+  입력 $3.00/1M  →  $0.0374
+  출력 $15.00/1M  →  $0.0375
+```
+
+MCP 서버에서는 `estimate_cost` 도구로 동일하게 사용할 수 있습니다. MCP 서버 기본 설정(`DOCPILOT_LLM=claude`)이라면 Claude 앱에서 "비용 예상해줘"라고 자연어로 요청해도 정상 동작합니다. 제한이 생기는 건 `DOCPILOT_LLM`을 OpenAI · Gemini 등 다른 제공자로 바꿨을 때만입니다.
 
 ## 예외 처리
 

@@ -55,3 +55,23 @@ class ClaudeMapper(BaseLLMMapper):
             output_tokens=response.usage.output_tokens,
             elapsed_seconds=elapsed,
         )
+
+    def count_tokens(self, content: str | list, sections: list[TemplateSection]) -> int:
+        """Count input tokens for a mapping request without making the actual API call."""
+        try:
+            import anthropic
+        except ImportError as e:
+            raise MappingError("anthropic SDK required: pip install anthropic") from e
+
+        client = anthropic.Anthropic(api_key=self._api_key)
+        prompt = self._build_prompt(self._resolve_content(content), sections)
+
+        try:
+            response = client.messages.count_tokens(
+                model=self._model,
+                messages=[{"role": "user", "content": prompt}],
+            )
+        except Exception as e:
+            raise MappingError("Token counting failed", detail=str(e)) from e
+
+        return response.input_tokens

@@ -15,6 +15,15 @@ load_dotenv()
 
 _PLACEHOLDER_RE = re.compile(r"\{\{(.+?)\}\}")
 
+_MODEL_PRICING: dict[str, tuple[float, float]] = {
+    "claude-opus-4-8":   (5.00, 25.00),
+    "claude-opus-4-7":   (5.00, 25.00),
+    "claude-opus-4-6":   (5.00, 25.00),
+    "claude-sonnet-4-6": (3.00, 15.00),
+    "claude-haiku-4-5":  (1.00,  5.00),
+}
+_EST_OUTPUT_TOKENS_PER_SECTION = 500
+
 # Maps file extension → required extra (None = included in base install)
 _EXT_EXTRAS: dict[str, str | None] = {
     ".txt":  None,
@@ -249,6 +258,63 @@ class DocPilot:
             use_llm=use_llm,
             llm_mapper=self._mapper if use_llm else None,
         )
+
+    def estimate_cost(
+        self,
+        data_folder: str | Path,
+        template: str | Path,
+    ) -> str:
+        """
+        Estimate API token cost before generating. No LLM call is made.
+
+        Indexes the data folder, runs RAG retrieval, and calls the token-counting
+        API to get an accurate input token count. Output tokens are estimated at
+        500 per section. Returns a formatted cost report string.
+        """
+        template_path = self._resolve_template(template)
+
+        from docpilot.db import indexer
+        indexer.index_folder(data_folder, embed_fn=self._embed_fn)
+
+        from docpilot.mapping.base import TemplateSection
+        sections = [TemplateSection(name=s) for s in _extract_placeholders(template_path)]
+        if not sections:
+            raise DocPilotError(
+                "No {{placeholders}} found in template",
+                detail=str(template_path),
+            )
+
+        content = self._rag_mapper.retrieve_content(sections)
+
+        if not hasattr(self._mapper, "count_tokens"):
+            n = len(sections)
+            return (
+                f"섹션 수: {n}개\n"
+                f"토큰 카운팅은 Claude 매퍼에서만 지원됩니다.\n"
+                f"섹션당 ~3,000 입력 + ~{_EST_OUTPUT_TOKENS_PER_SECTION} 출력 토큰 기준\n"
+                f"대략 {n * 3000:,} 입력 / {n * _EST_OUTPUT_TOKENS_PER_SECTION:,} 출력 예상"
+            )
+
+        input_tokens: int = self._mapper.count_tokens(content, sections)
+        est_output = len(sections) * _EST_OUTPUT_TOKENS_PER_SECTION
+
+        model: str = getattr(self._mapper, "_model", "claude-sonnet-4-6")
+        in_price, out_price = _MODEL_PRICING.get(model, (3.00, 15.00))
+        input_cost = input_tokens / 1_000_000 * in_price
+        output_cost = est_output / 1_000_000 * out_price
+        total_cost = input_cost + output_cost
+
+        lines = [
+            "=== docpilot 비용 추정 ===",
+            f"모델:             {model}",
+            f"섹션 수:          {len(sections)}개",
+            f"입력 토큰:        {input_tokens:,}",
+            f"출력 토큰 (추정): {est_output:,}  (섹션당 {_EST_OUTPUT_TOKENS_PER_SECTION} 추정)",
+            f"예상 비용:        ${total_cost:.4f}",
+            f"  입력 ${in_price:.2f}/1M  →  ${input_cost:.4f}",
+            f"  출력 ${out_price:.2f}/1M  →  ${output_cost:.4f}",
+        ]
+        return "\n".join(lines)
 
     def benchmark(
         self,

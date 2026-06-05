@@ -49,6 +49,7 @@ voyage    = ["voyageai>=0.3"]
 bge       = ["FlagEmbedding>=1.0"]
 sentence  = ["sentence-transformers>=3.0"]
 postgres  = ["psycopg2-binary>=2.9", "pgvector>=0.3"]
+mcp       = ["mcp[cli]>=1.0"]
 all       = [
     "pdfplumber>=0.11", "pdf2image>=1.17", "Pillow>=10.0", "pytesseract>=0.3", "reportlab>=4.0",
     "python-pptx>=1.0",
@@ -63,6 +64,9 @@ all       = [
     "psycopg2-binary>=2.9", "pgvector>=0.3",
 ]
 dev = ["pytest>=8.0", "pytest-mock>=3.0"]
+
+[project.scripts]
+docpilot-mcp = "docpilot.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
