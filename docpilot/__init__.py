@@ -33,6 +33,7 @@ _EXT_EXTRAS: dict[str, str | None] = {
     ".hwpx": None,
     ".pdf":  "pdf",
     ".pptx": "pptx",
+    ".docx": "docx",
     ".jpg":  "image",
     ".jpeg": "image",
     ".png":  "image",
