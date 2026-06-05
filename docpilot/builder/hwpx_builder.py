@@ -89,6 +89,8 @@ def _replace_placeholders(root, sections: dict[str, str]) -> None:
     hp_ns = root.nsmap.get("hp", "http://www.hancom.co.kr/hwpml/2012/paragraph")
     hp_t = f"{{{hp_ns}}}t"
     hp_p = f"{{{hp_ns}}}p"
+    hp_linesegarray = f"{{{hp_ns}}}linesegarray"
+    hp_lineseg = f"{{{hp_ns}}}lineseg"
 
     for para in list(root.iter(hp_p)):
         t_elements = para.findall(f".//{hp_t}")
@@ -111,6 +113,7 @@ def _replace_placeholders(root, sections: dict[str, str]) -> None:
             t_elements[0].text = lines[0]
             for el in t_elements[1:]:
                 el.text = ""
+            _clear_lineseg(para, hp_linesegarray, hp_lineseg)
             continue
 
         # Multiline: expand into one <hp:p> per line
@@ -119,6 +122,7 @@ def _replace_placeholders(root, sections: dict[str, str]) -> None:
             t_elements[0].text = " ".join(lines)
             for el in t_elements[1:]:
                 el.text = ""
+            _clear_lineseg(para, hp_linesegarray, hp_lineseg)
             continue
 
         idx = list(parent).index(para)
@@ -133,8 +137,18 @@ def _replace_placeholders(root, sections: dict[str, str]) -> None:
                 new_t_elements[0].text = line
                 for el in new_t_elements[1:]:
                     el.text = ""
+            _clear_lineseg(new_p, hp_linesegarray, hp_lineseg)
             new_paras.append(new_p)
 
         parent.remove(para)
         for j, new_p in enumerate(new_paras):
             parent.insert(idx + j, new_p)
+
+
+def _clear_lineseg(para, hp_linesegarray: str, hp_lineseg: str) -> None:
+    """lineseg 자식을 제거해 HWP가 열 때 레이아웃을 재계산하도록 한다."""
+    lsa = para.find(hp_linesegarray)
+    if lsa is None:
+        return
+    for ls in list(lsa.findall(hp_lineseg)):
+        lsa.remove(ls)

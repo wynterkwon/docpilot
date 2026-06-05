@@ -21,23 +21,27 @@ def search(query: str, top_k: int = 10) -> list[SearchResult]:
         raise SearchError("No morphemes extracted from query", detail=query)
 
     with client.session() as db:
-        rows = (
+        raw_rows = (
             db.query(Chunk, Document.source)
             .join(Document, Chunk.document_id == Document.id)
             .all()
         )
+        rows = [
+            (chunk.id, chunk.document_id, chunk.content, source)
+            for chunk, source in raw_rows
+        ]
 
     scored: list[SearchResult] = []
-    for chunk, source in rows:
-        chunk_morphemes = _tokenize(chunk.content)
+    for chunk_id, document_id, content, source in rows:
+        chunk_morphemes = _tokenize(content)
         score = _jaccard(query_morphemes, chunk_morphemes)
         if score > 0:
             scored.append(
                 SearchResult(
-                    chunk_id=chunk.id,
-                    document_id=chunk.document_id,
+                    chunk_id=chunk_id,
+                    document_id=document_id,
                     source=source,
-                    content=chunk.content,
+                    content=content,
                     score=score,
                 )
             )

@@ -33,3 +33,11 @@ htmlcov/
 # Internal docs
 *.md
 !README.md
+
+# Test artifacts
+test-data/
+test-output/
+*.hwpx
+
+# Runtime database
+*.db
