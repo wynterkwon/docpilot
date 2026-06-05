@@ -36,6 +36,7 @@ def generate(
     template: str,
     output: str,
     reindex: bool = False,
+    extra_instructions: str | None = None,
 ) -> str:
     """데이터 폴더와 템플릿으로 문서를 생성합니다.
 
@@ -44,12 +45,14 @@ def generate(
         template: 템플릿 파일 경로 또는 내장 템플릿 이름 (report / gonmun / minutes / proposal)
         output: 출력 파일 경로 — 확장자가 출력 형식을 결정합니다 (.hwpx / .pdf / .docx)
         reindex: True이면 데이터 폴더를 강제로 재인덱싱합니다 (기본값: False)
+        extra_instructions: LLM 프롬프트에 추가할 작성 지침 (예: RFP의 제안서 작성 요령)
     """
     result = _get_pilot().generate(
         data_folder=data_folder,
         template=template,
         output=output,
         reindex=reindex,
+        extra_instructions=extra_instructions,
     )
     return (
         f"문서 생성 완료: {result.path}\n"

@@ -46,6 +46,7 @@ class BaseLLMMapper(ABC):
         self,
         content: str | list[IngestedDocument],
         sections: list[TemplateSection],
+        instructions: str | None = None,
     ) -> MappingResult:
         """
         Map source content into template sections.
@@ -60,7 +61,12 @@ class BaseLLMMapper(ABC):
             return content
         return merge_documents(content)
 
-    def _build_prompt(self, content: str, sections: list[TemplateSection]) -> str:
+    def _build_prompt(
+        self,
+        content: str,
+        sections: list[TemplateSection],
+        instructions: str | None = None,
+    ) -> str:
         section_list = "\n".join(
             f'- "{s.name}": {s.description}' if s.description else f'- "{s.name}"'
             for s in sections
@@ -70,6 +76,11 @@ class BaseLLMMapper(ABC):
             {"sections": {s.name: "..." for s in sections}},
             ensure_ascii=False,
             indent=2,
+        )
+        extra = (
+            f"\n## 추가 작성 지침\n{instructions.strip()}\n"
+            if instructions and instructions.strip()
+            else ""
         )
         return f"""다음 소스 데이터를 읽고, 주어진 모든 섹션에 들어갈 내용을 한국어로 작성하세요.
 
@@ -81,7 +92,7 @@ class BaseLLMMapper(ABC):
 - 소스 데이터가 여러 출처로 구성된 경우, 모든 출처를 종합하여 작성하세요.
 - 소스 데이터에 해당 섹션의 내용이 불충분하면, 문맥상 가장 적절한 내용으로 작성하세요.
 - 각 섹션 내용은 완성된 문장으로 작성하세요.
-
+{extra}
 ## 채워야 할 섹션
 {section_list}
 

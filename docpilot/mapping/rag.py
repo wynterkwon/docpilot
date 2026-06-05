@@ -34,9 +34,9 @@ class RagMapper:
         self._embed_fn = embed_fn
         self._top_k = top_k
 
-    def map(self, sections: list[TemplateSection]) -> MappingResult:
+    def map(self, sections: list[TemplateSection], instructions: str | None = None) -> MappingResult:
         content = self.retrieve_content(sections)
-        return self._mapper.map(content, sections)
+        return self._mapper.map(content, sections, instructions)
 
     def retrieve_content(self, sections: list[TemplateSection]) -> str:
         """Retrieve and assemble relevant chunks for the given sections."""

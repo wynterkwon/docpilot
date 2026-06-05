@@ -25,14 +25,14 @@ class ClaudeMapper(BaseLLMMapper):
                 detail="Pass api_key or set ANTHROPIC_API_KEY env var",
             )
 
-    def map(self, content, sections: list[TemplateSection]) -> MappingResult:
+    def map(self, content, sections: list[TemplateSection], instructions: str | None = None) -> MappingResult:
         try:
             import anthropic
         except ImportError as e:
             raise MappingError("anthropic SDK required: pip install anthropic") from e
 
         client = anthropic.Anthropic(api_key=self._api_key)
-        prompt = self._build_prompt(self._resolve_content(content), sections)
+        prompt = self._build_prompt(self._resolve_content(content), sections, instructions)
 
         start = time.perf_counter()
         try:
@@ -56,7 +56,7 @@ class ClaudeMapper(BaseLLMMapper):
             elapsed_seconds=elapsed,
         )
 
-    def count_tokens(self, content: str | list, sections: list[TemplateSection]) -> int:
+    def count_tokens(self, content: str | list, sections: list[TemplateSection], instructions: str | None = None) -> int:
         """Count input tokens for a mapping request without making the actual API call."""
         try:
             import anthropic
@@ -64,7 +64,7 @@ class ClaudeMapper(BaseLLMMapper):
             raise MappingError("anthropic SDK required: pip install anthropic") from e
 
         client = anthropic.Anthropic(api_key=self._api_key)
-        prompt = self._build_prompt(self._resolve_content(content), sections)
+        prompt = self._build_prompt(self._resolve_content(content), sections, instructions)
 
         try:
             response = client.messages.count_tokens(

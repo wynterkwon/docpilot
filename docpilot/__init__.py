@@ -238,13 +238,17 @@ class DocPilot:
         template: str | Path,
         output: str | Path,
         reindex: bool = False,
+        extra_instructions: str | None = None,
     ) -> GenerateResult:
         """
         Full pipeline: index → search → map → build.
 
-        template: file path (.hwpx/.docx/.pdf) or built-in template name.
-        output:   destination file path — extension determines builder.
-        reindex:  re-index data_folder even if already indexed.
+        template:           file path (.hwpx/.docx/.pdf) or built-in template name.
+        output:             destination file path — extension determines builder.
+        reindex:            re-index data_folder even if already indexed.
+        extra_instructions: additional writing guidelines injected into the LLM prompt.
+                            Use this to pass document-specific rules such as proposal
+                            writing guidelines extracted from an RFP.
         """
         template_path = self._resolve_template(template)
         output_path = Path(output)
@@ -260,7 +264,7 @@ class DocPilot:
                 detail=str(template_path),
             )
 
-        mapping_result = self._rag_mapper.map(sections)
+        mapping_result = self._rag_mapper.map(sections, instructions=extra_instructions)
 
         builder = self._build_builder(output_path)
         out_path = builder.build(template_path, mapping_result.sections, output_path)
