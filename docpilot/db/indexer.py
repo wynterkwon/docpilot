@@ -130,14 +130,63 @@ def index_folder(
 
 
 def _split(text: str, chunk_size: int, overlap: int) -> list[str]:
+    """Split text at \\n\\n paragraph boundaries.
+
+    Units (paragraphs) are never broken mid-way unless a single unit
+    exceeds chunk_size, in which case character splitting is used as a
+    fallback for that unit only.
+    """
     if not text:
         return []
+
+    units = [u for u in text.split("\n\n") if u.strip()]
+    if not units:
+        return []
+
     chunks: list[str] = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start += chunk_size - overlap
+    window: list[str] = []
+    window_len = 0  # joined char count including \n\n separators
+
+    for unit in units:
+        unit_len = len(unit)
+
+        # Single unit exceeds chunk_size — char-split fallback for this unit only
+        if unit_len > chunk_size:
+            if window:
+                chunks.append("\n\n".join(window))
+                window, window_len = [], 0
+            start = 0
+            while start < unit_len:
+                chunks.append(unit[start:start + chunk_size])
+                start += chunk_size - overlap
+            continue
+
+        # Would adding this unit overflow the window?
+        sep = 2 if window else 0
+        if window_len + sep + unit_len > chunk_size:
+            chunks.append("\n\n".join(window))
+
+            # Carry over trailing units within the overlap budget
+            tail: list[str] = []
+            tail_len = 0
+            for prev in reversed(window):
+                cost = len(prev) + (2 if tail else 0)
+                if tail_len + cost <= overlap:
+                    tail.insert(0, prev)
+                    tail_len += cost
+                else:
+                    break
+
+            window = tail
+            window_len = tail_len
+            sep = 2 if window else 0
+
+        window_len += sep + unit_len
+        window.append(unit)
+
+    if window:
+        chunks.append("\n\n".join(window))
+
     return chunks
 
 
