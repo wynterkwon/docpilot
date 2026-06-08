@@ -484,7 +484,15 @@ pip install "docpilot[mcp]"
 }
 ```
 
-> **`DOCPILOT_DATABASE_URL`은 절대 경로로 지정하세요.** Claude Desktop이 MCP 서버를 실행하는 작업 디렉터리는 사용자 프로젝트 폴더가 아닙니다. 미지정 시 기본값은 `~/docpilot.db`(홈 디렉터리)입니다. `generate` 도구의 `data_folder`도 절대 경로로 전달해야 합니다.
+> **경로는 모두 절대 경로로 지정하세요.** Claude Desktop이 MCP 서버를 실행하는 작업 디렉터리는 사용자 프로젝트 폴더가 아닙니다. `DOCPILOT_DATABASE_URL` 미지정 시 기본값은 `~/docpilot.db`(홈 디렉터리)입니다. `generate` 도구의 `data_folder`, `output`, 커스텀 템플릿 경로도 절대 경로로 전달해야 합니다.
+
+### macOS 파일 접근 권한
+
+macOS는 앱별로 `~/Documents`, `~/Desktop`, `~/Downloads` 접근을 별도로 허가받아야 합니다. MCP 서버는 Claude Desktop의 자식 프로세스이므로 Claude Desktop에 권한이 없으면 해당 폴더의 파일을 읽거나 쓸 수 없습니다.
+
+**시스템 환경설정 → 개인 정보 보호 및 보안 → 파일 및 폴더** (또는 **전체 디스크 접근**)에서 Claude에 필요한 폴더 권한을 부여하세요.
+
+홈 디렉터리 바로 아래(`~/docpilot.db`, `~/data/` 등)는 별도 허가 없이 접근 가능합니다.
 
 설정 저장 후 Claude Desktop을 재시작하면 다음 도구가 활성화됩니다.
 
@@ -497,8 +505,17 @@ pip install "docpilot[mcp]"
 Claude 앱에서 자연어로 사용합니다.
 
 ```
-/data 폴더의 내용을 바탕으로 report 템플릿으로 보고서를 만들어줘.
-출력 경로는 /output/result.hwpx
+# 내장 템플릿 사용 — 이름만 지정
+/Users/me/data 폴더 내용으로 report 템플릿 써서 보고서 만들어줘.
+출력은 /Users/me/Documents/result.hwpx 로 저장해줘.
+
+# 커스텀 템플릿 사용 — 절대 경로로 지정
+/Users/me/data 폴더 내용으로 /Users/me/templates/proposal.hwpx 템플릿 써서
+/Users/me/Documents/proposal_result.hwpx 로 저장해줘.
+
+# 템플릿 자동 생성
+/Users/me/samples 폴더의 hwpx 파일들로 템플릿 만들어서
+/Users/me/templates/my_report.hwpx 로 저장해줘.
 ```
 
 ### 환경변수
