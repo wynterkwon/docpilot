@@ -339,8 +339,12 @@ class DocPilot:
             )
 
         style_hints: dict[str, str] = {}
-        if template_path.suffix.lower() == ".hwpx":
+        _tpl_ext = template_path.suffix.lower()
+        if _tpl_ext == ".hwpx":
             from docpilot.builder.hwpx_analyzer import extract_style_hints
+            style_hints = extract_style_hints(template_path)
+        elif _tpl_ext == ".docx":
+            from docpilot.builder.docx_analyzer import extract_style_hints
             style_hints = extract_style_hints(template_path)
 
         sections = [
