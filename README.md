@@ -215,6 +215,21 @@ LLM은 이 정보를 참고해 서식에 어울리는 분량으로 내용을 작
 
 템플릿을 직접 만들 때는 플레이스홀더를 실제 내용이 들어갈 위치에 삽입하면 해당 위치의 스타일이 자동으로 추출됩니다. `generate_template()`으로 자동 생성한 템플릿도 샘플 문서의 본문 스타일을 복제하므로 동일하게 적용됩니다.
 
+## 작성 지침 문서 (RFP·제안요청서)
+
+제안요청서나 작성 요령이 담긴 파일을 `instructions_doc`으로 넘기면, LLM이 해당 파일 전체를 읽어 지침으로 활용합니다. `data` 폴더의 RAG 검색과 달리 파일 내용이 **온전히** 프롬프트에 포함됩니다.
+
+```python
+pilot.generate(
+    data_folder="./data",          # 실질 내용 재료
+    template="proposal",
+    output="./output/proposal.hwpx",
+    instructions_doc="./rfp.hwpx", # 제안요청서 — 지침으로 자동 주입
+)
+```
+
+`extra_instructions`(직접 작성한 문자열)와 함께 쓰면 두 내용이 합쳐져서 LLM에 전달됩니다. 지원 형식: `.hwpx`, `.docx`, `.pdf`, `.txt`, `.md` 등.
+
 ## 내장 템플릿
 
 설치 즉시 사용할 수 있는 한글(HWPX) 템플릿이 포함되어 있습니다. 이름으로 참조하면 됩니다.

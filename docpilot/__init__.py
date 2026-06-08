@@ -162,6 +162,32 @@ def _b(base_url: str | None) -> dict:
     return {"base_url": base_url} if base_url else {}
 
 
+def _ingest_instructions_doc(path: Path) -> str:
+    """지침 문서를 읽어 텍스트로 반환한다. 지원하지 않는 형식이면 빈 문자열 반환."""
+    from docpilot.ingestion import text as text_ing
+    from docpilot.ingestion import hwpx as hwpx_ing
+
+    ext = path.suffix.lower()
+
+    try:
+        if ext == ".hwpx":
+            return hwpx_ing.ingest(path).content
+        if ext in text_ing.SUPPORTED_EXTENSIONS:
+            return text_ing.ingest(path).content
+        if ext == ".pdf":
+            from docpilot.ingestion import pdf as pdf_ing
+            return pdf_ing.ingest(path).content
+        if ext == ".docx":
+            from docpilot.ingestion import docx as docx_ing
+            return docx_ing.ingest(path).content
+        if ext == ".pptx":
+            from docpilot.ingestion import pptx as pptx_ing
+            return pptx_ing.ingest(path).content
+    except Exception:
+        pass
+    return ""
+
+
 def _validate_hwpx(path: Path) -> None:
     """생성된 HWPX 파일의 구조 무결성을 비차단 방식으로 검사한다."""
     import logging
@@ -277,6 +303,7 @@ class DocPilot:
         output: str | Path,
         reindex: bool = False,
         extra_instructions: str | None = None,
+        instructions_doc: str | Path | None = None,
     ) -> GenerateResult:
         """
         Full pipeline: index → search → map → build.
@@ -290,6 +317,15 @@ class DocPilot:
         """
         template_path = self._resolve_template(template)
         output_path = Path(output)
+
+        if instructions_doc is not None:
+            doc_text = _ingest_instructions_doc(Path(instructions_doc))
+            if doc_text:
+                header = f"[지침 문서: {Path(instructions_doc).name}]\n{doc_text}"
+                extra_instructions = (
+                    f"{header}\n\n{extra_instructions}" if extra_instructions
+                    else header
+                )
 
         from docpilot.db import indexer
         indexer.index_folder(data_folder, embed_fn=self._embed_fn, force=reindex)

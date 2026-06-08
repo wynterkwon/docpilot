@@ -24,6 +24,11 @@ SAMPLES = [
 
 LLM     = os.environ.get("DOCPILOT_LLM", "claude")
 API_KEY = os.environ.get("ANTHROPIC_API_KEY")   # 다른 LLM이면 해당 키로 변경
+
+# 작성 지침 문서 (RFP·제안요청서 등) — 파일 내용이 자동으로 LLM 지침에 추가됨
+# 문자열로 직접 지침을 쓰려면 EXTRA_INSTRUCTIONS 사용
+INSTRUCTIONS_DOC = None   # 예: "./첨부+3.hwpx"
+EXTRA_INSTRUCTIONS = None # 예: "경어체로 작성하세요."
 # ──────────────────────────────────────────────────────
 
 
@@ -60,6 +65,8 @@ def main():
         data_folder=DATA_FOLDER,
         template=template_arg,
         output=OUTPUT,
+        extra_instructions=EXTRA_INSTRUCTIONS,
+        instructions_doc=INSTRUCTIONS_DOC,
     )
     print(f"\n완료: {output}")
 
