@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from docpilot.exceptions import TemplateError
+from typing import Callable
+
 from docpilot.template_generator.extractor import ParagraphInfo, extract
 
 # Default threshold: at least 70% of sample documents must share a section
@@ -21,13 +23,18 @@ class AnalysisResult:
 def analyze(
     samples: list[str | Path],
     confidence_threshold: float = DEFAULT_CONFIDENCE_THRESHOLD,
+    extractor: Callable[[Path], list[ParagraphInfo]] | None = None,
 ) -> AnalysisResult:
     """
-    Analyze multiple HWPX sample documents to extract common section structure.
+    Analyze multiple sample documents to extract common section structure.
 
+    extractor: paragraph extractor function; defaults to the HWPX extractor.
     confidence: fraction of documents that share each detected section heading.
     Only sections meeting the threshold are included in common_sections.
     """
+    if extractor is None:
+        extractor = extract
+
     if not samples:
         raise TemplateError("At least one sample document is required")
 
@@ -35,7 +42,7 @@ def analyze(
 
     for path in samples:
         path = Path(path)
-        paragraphs = extract(path)
+        paragraphs = extractor(path)
         headings = [p.text for p in paragraphs if p.is_heading_candidate]
         per_doc[str(path)] = headings
 

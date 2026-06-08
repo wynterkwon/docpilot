@@ -23,7 +23,9 @@ def generate(
     llm_mapper=None,
 ) -> Path:
     """
-    Generate an HWPX template from sample documents.
+    Generate a template from sample documents.
+
+    Output format is determined by the output file extension (.hwpx or .docx).
 
     Flow:
       1. Analyze samples for common section structure.
@@ -33,9 +35,13 @@ def generate(
            - use_llm=False → raise TemplateError (caller should add more samples)
            - use_llm=None  → print confidence and raise (interactive use)
 
-    Returns path to the generated template HWPX.
+    Returns path to the generated template file.
     """
     output = Path(output)
+
+    if output.suffix.lower() == ".docx":
+        return _generate_docx(samples, output, confidence_threshold, use_llm, llm_mapper)
+
     result = analyze(samples, confidence_threshold)
 
     if result.confidence >= confidence_threshold:
@@ -244,3 +250,82 @@ def _pack(src: Path, output: Path) -> None:
             if not file.is_file() or file.name == "mimetype":
                 continue
             zf.write(file, file.relative_to(src))
+
+
+# ---------------------------------------------------------------------------
+# DOCX template generation
+# ---------------------------------------------------------------------------
+
+def _generate_docx(
+    samples: list[str | Path],
+    output: Path,
+    confidence_threshold: float,
+    use_llm: bool | None,
+    llm_mapper,
+) -> Path:
+    from docpilot.template_generator.docx_extractor import extract_docx
+
+    result = analyze(samples, confidence_threshold, extractor=extract_docx)
+
+    if result.confidence >= confidence_threshold:
+        return _build_docx_template(samples[0], result.common_sections, output)
+
+    msg = (
+        f"공통 패턴 신뢰도: {result.confidence:.0%} "
+        f"(임계값: {confidence_threshold:.0%}). "
+        f"감지된 섹션: {result.common_sections or '없음'}"
+    )
+
+    if use_llm is None:
+        raise TemplateError(
+            msg,
+            detail="use_llm=True로 LLM 보조를 활성화하거나 샘플을 추가하세요",
+        )
+    if not use_llm:
+        raise TemplateError(msg, detail="샘플을 추가하거나 임계값을 낮추세요")
+
+    sections = _infer_sections_with_llm(samples, result, llm_mapper)
+    return _build_docx_template(samples[0], sections, output)
+
+
+def _build_docx_template(
+    base_docx: str | Path,
+    sections: list[str],
+    output: Path,
+) -> Path:
+    """Copy the first sample DOCX as a structural base, then append
+    {{section_name}} placeholder paragraphs at the end."""
+    try:
+        import docx as python_docx
+    except ImportError as e:
+        raise TemplateError("python-docx is required: pip install python-docx") from e
+
+    base_docx = Path(base_docx)
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        doc = python_docx.Document(str(base_docx))
+    except Exception as e:
+        raise TemplateError("Failed to open base DOCX", detail=str(e)) from e
+
+    # Find a non-heading body paragraph to use as style template
+    body_style = None
+    for para in doc.paragraphs:
+        if para.text.strip() and not (para.style and para.style.name.startswith("Heading")):
+            body_style = para.style
+            break
+
+    for section in sections:
+        new_para = doc.add_paragraph(f"{{{{{section}}}}}")
+        if body_style is not None:
+            try:
+                new_para.style = body_style
+            except Exception:
+                pass
+
+    try:
+        doc.save(str(output))
+    except Exception as e:
+        raise TemplateError("Failed to save DOCX template", detail=str(e)) from e
+
+    return output
