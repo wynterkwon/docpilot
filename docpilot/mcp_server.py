@@ -15,7 +15,7 @@ def _get_pilot():
             llm=os.environ.get("DOCPILOT_LLM", "claude"),
             api_key=os.environ.get("ANTHROPIC_API_KEY"),
             model=os.environ.get("DOCPILOT_MODEL") or None,
-            database_url=os.environ.get("DATABASE_URL") or None,
+            database_url=os.environ.get("DOCPILOT_DATABASE_URL") or None,
         )
     return _pilot
 

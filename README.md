@@ -467,12 +467,15 @@ pip install "docpilot[mcp]"
     "docpilot": {
       "command": "docpilot-mcp",
       "env": {
-        "ANTHROPIC_API_KEY": "sk-ant-..."
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "DOCPILOT_DATABASE_URL": "sqlite:////Users/yourname/docpilot.db"
       }
     }
   }
 }
 ```
+
+> **`DOCPILOT_DATABASE_URL`은 절대 경로로 지정하세요.** Claude Desktop이 MCP 서버를 실행하는 작업 디렉터리는 사용자 프로젝트 폴더가 아닙니다. 미지정 시 기본값은 `~/docpilot.db`(홈 디렉터리)입니다. `generate` 도구의 `data_folder`도 절대 경로로 전달해야 합니다.
 
 설정 저장 후 Claude Desktop을 재시작하면 다음 도구가 활성화됩니다.
 
@@ -496,7 +499,7 @@ Claude 앱에서 자연어로 사용합니다.
 | `ANTHROPIC_API_KEY` | — | Claude API 키 (필수) |
 | `DOCPILOT_LLM` | `claude` | LLM 제공자 (`claude` / `openai` / `gemini` / `grok` / `ollama`) |
 | `DOCPILOT_MODEL` | 제공자 기본 | 특정 모델 지정 (예: `claude-opus-4-8`) |
-| `DATABASE_URL` | SQLite 로컬 | DB 연결 문자열 |
+| `DOCPILOT_DATABASE_URL` | `~/docpilot.db` | DB 연결 문자열 (절대 경로 권장) |
 
 ## 비용 추정
 

@@ -15,19 +15,21 @@ _engine: Engine | None = None
 _SessionLocal: sessionmaker | None = None
 _backend: str = "sqlite"
 
-_DEFAULT_SQLITE_URL = "sqlite:///./docpilot.db"
+def _default_sqlite_url() -> str:
+    from pathlib import Path
+    return "sqlite:///" + str(Path.home() / "docpilot.db")
 
 
 def init(database_url: str | None = None) -> None:
     """
     Initialize the database engine.
 
-    Defaults to a local SQLite file (docpilot.db) when no URL is provided.
+    Defaults to ~/docpilot.db (absolute path) when no URL is provided.
     Pass a PostgreSQL URL or set DOCPILOT_DATABASE_URL to use PostgreSQL + pgvector.
     """
     global _engine, _SessionLocal, _backend
 
-    url = database_url or os.environ.get("DOCPILOT_DATABASE_URL", _DEFAULT_SQLITE_URL)
+    url = database_url or os.environ.get("DOCPILOT_DATABASE_URL") or _default_sqlite_url()
     _backend = "sqlite" if url.startswith("sqlite") else "postgresql"
 
     _engine = create_engine(url, pool_pre_ping=(_backend != "sqlite"))
