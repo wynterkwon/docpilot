@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 class TemplateSection:
     name: str
     description: str = ""
+    style_hint: str = ""
 
 
 @dataclass
@@ -67,10 +68,16 @@ class BaseLLMMapper(ABC):
         sections: list[TemplateSection],
         instructions: str | None = None,
     ) -> str:
-        section_list = "\n".join(
-            f'- "{s.name}": {s.description}' if s.description else f'- "{s.name}"'
-            for s in sections
-        )
+        def _fmt(s: TemplateSection) -> str:
+            parts: list[str] = []
+            if s.style_hint:
+                parts.append(f"[스타일: {s.style_hint}]")
+            if s.description:
+                parts.append(s.description)
+            suffix = " ".join(parts)
+            return f'- "{s.name}": {suffix}' if suffix else f'- "{s.name}"'
+
+        section_list = "\n".join(_fmt(s) for s in sections)
         section_keys = json.dumps([s.name for s in sections], ensure_ascii=False)
         example_obj = json.dumps(
             {"sections": {s.name: "..." for s in sections}},
@@ -92,6 +99,7 @@ class BaseLLMMapper(ABC):
 - 소스 데이터가 여러 출처로 구성된 경우, 모든 출처를 종합하여 작성하세요.
 - 소스 데이터에 해당 섹션의 내용이 불충분하면, 문맥상 가장 적절한 내용으로 작성하세요.
 - 각 섹션 내용은 완성된 문장으로 작성하세요.
+- 섹션에 [스타일: ...]가 표시된 경우, 해당 서식(글꼴 크기, 표 셀 너비 등)을 참고해 적절한 분량으로 작성하세요. 내용이 짧으면 짧게, 길면 길게 — 분량은 내용에 맞게 자유롭게 결정하세요.
 {extra}
 ## 채워야 할 섹션
 {section_list}

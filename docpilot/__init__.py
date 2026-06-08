@@ -162,6 +162,44 @@ def _b(base_url: str | None) -> dict:
     return {"base_url": base_url} if base_url else {}
 
 
+def _validate_hwpx(path: Path) -> None:
+    """생성된 HWPX 파일의 구조 무결성을 비차단 방식으로 검사한다."""
+    import logging
+    import warnings
+
+    _REQUIRED = [
+        "mimetype",
+        "Contents/content.hpf",
+        "Contents/header.xml",
+    ]
+
+    try:
+        with zipfile.ZipFile(path, "r") as zf:
+            names = zf.namelist()
+            missing = [f for f in _REQUIRED if f not in names]
+            if missing:
+                warnings.warn(
+                    f"HWPX 검증 경고 — 필수 파일 누락: {', '.join(missing)}",
+                    stacklevel=4,
+                )
+
+            try:
+                from lxml import etree
+                for name in names:
+                    if name.endswith(".xml") or name.endswith(".hpf"):
+                        try:
+                            etree.fromstring(zf.read(name))
+                        except Exception as xml_err:
+                            warnings.warn(
+                                f"HWPX 검증 경고 — XML 오류 in {name}: {xml_err}",
+                                stacklevel=4,
+                            )
+            except ImportError:
+                pass
+    except Exception as exc:
+        logging.getLogger(__name__).debug("HWPX 검증 실패 (무시됨): %s", exc)
+
+
 def _extract_placeholders(template_path: Path) -> list[str]:
     """Extract {{section}} placeholder names from a template file."""
     suffix = template_path.suffix.lower()
@@ -257,17 +295,31 @@ class DocPilot:
         indexer.index_folder(data_folder, embed_fn=self._embed_fn, force=reindex)
 
         from docpilot.mapping.base import TemplateSection
-        sections = [TemplateSection(name=s) for s in _extract_placeholders(template_path)]
-        if not sections:
+        placeholder_names = _extract_placeholders(template_path)
+        if not placeholder_names:
             raise DocPilotError(
                 "No {{placeholders}} found in template",
                 detail=str(template_path),
             )
 
+        style_hints: dict[str, str] = {}
+        if template_path.suffix.lower() == ".hwpx":
+            from docpilot.builder.hwpx_analyzer import extract_style_hints
+            style_hints = extract_style_hints(template_path)
+
+        sections = [
+            TemplateSection(name=s, style_hint=style_hints.get(s, ""))
+            for s in placeholder_names
+        ]
+
         mapping_result = self._rag_mapper.map(sections, instructions=extra_instructions)
 
         builder = self._build_builder(output_path)
         out_path = builder.build(template_path, mapping_result.sections, output_path)
+
+        if out_path.suffix.lower() == ".hwpx":
+            _validate_hwpx(out_path)
+
         return GenerateResult(
             path=out_path,
             model=mapping_result.model,

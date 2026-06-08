@@ -158,19 +158,81 @@ def _build_template(
 
 
 def _inject_placeholders(root, sections: list[str]) -> None:
+    import copy
     from lxml import etree
 
     hp = _NS_HP
+    hp_p = f"{{{hp}}}p"
+    hp_run = f"{{{hp}}}run"
+    hp_t = f"{{{hp}}}t"
+    hp_linesegarray = f"{{{hp}}}linesegarray"
+    hp_lineseg = f"{{{hp}}}lineseg"
+
     body = root.find(f".//{{{hp}}}body")
     if body is None:
         body = root.find(f".//{{{hp}}}sec")
     if body is None:
-        body = root  # fallback: append to root
+        body = root
 
-    for section in sections:
-        p = etree.SubElement(body, f"{{{hp}}}p")
-        t = etree.SubElement(p, f"{{{hp}}}t")
-        t.text = f"{{{{{section}}}}}"
+    style_para = _find_body_para(root, hp_p, hp_run)
+    base_id = _max_para_id(root, hp_p)
+
+    for i, section in enumerate(sections):
+        if style_para is not None:
+            new_p = copy.deepcopy(style_para)
+            new_p.set("id", str(base_id + 10000 + i))
+            t_elements = new_p.findall(f".//{hp_t}")
+            if t_elements:
+                t_elements[0].text = f"{{{{{section}}}}}"
+                for el in t_elements[1:]:
+                    el.text = ""
+            lsa = new_p.find(hp_linesegarray)
+            if lsa is not None:
+                for ls in list(lsa.findall(hp_lineseg)):
+                    lsa.remove(ls)
+            body.append(new_p)
+        else:
+            p = etree.SubElement(body, hp_p)
+            t = etree.SubElement(p, hp_t)
+            t.text = f"{{{{{section}}}}}"
+
+
+def _find_body_para(root, hp_p: str, hp_run: str):
+    """본문 스타일을 가진 첫 번째 non-table 문단을 반환한다 (스타일 복제용)."""
+    for para in root.iter(hp_p):
+        runs = para.findall(f".//{hp_run}")
+        if not runs:
+            continue
+        if not any(run.get("charPrIDRef") is not None for run in runs):
+            continue
+        if not _para_in_table(para):
+            return para
+    for para in root.iter(hp_p):
+        if para.findall(f".//{hp_run}"):
+            return para
+    return None
+
+
+def _para_in_table(element) -> bool:
+    """element가 표 셀 안에 있으면 True를 반환한다."""
+    parent = element.getparent()
+    while parent is not None:
+        if parent.tag.endswith("}tc") or parent.tag.endswith("}subList"):
+            return True
+        parent = parent.getparent()
+    return False
+
+
+def _max_para_id(root, hp_p: str) -> int:
+    """문서 내 최대 문단 id를 반환한다."""
+    max_id = 0
+    for para in root.iter(hp_p):
+        try:
+            pid = int(para.get("id", "0"))
+            max_id = max(max_id, pid)
+        except ValueError:
+            pass
+    return max_id
 
 
 def _pack(src: Path, output: Path) -> None:
