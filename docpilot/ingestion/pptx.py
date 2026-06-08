@@ -70,9 +70,14 @@ def _get_body(slide, title: str) -> list[str]:
             continue
         if not shape.has_text_frame:
             continue
-        text = shape.text_frame.text.strip()
-        if text and text != title:
-            lines.append(text)
+        for para in shape.text_frame.paragraphs:
+            text = para.text.strip()
+            if not text or text == title:
+                continue
+            level = para.level  # 0 = 최상위, 1+ = 들여쓰기
+            indent = "  " * level
+            prefix = "- " if level > 0 else ""
+            lines.append(indent + prefix + text)
     return lines
 
 

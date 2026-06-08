@@ -38,6 +38,9 @@ htmlcov/
 test-data/
 test-output/
 *.hwpx
+hwpxskill/
+data/
+samples/
 
 # Runtime database
 *.db
